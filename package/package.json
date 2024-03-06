@@ -1,7 +1,7 @@
 {
   "name": "cesh",
   "description": "code-editor-syntax-highlighter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "repository": {
     "url": "https://github.com/IJMacD/code-editor-syntax-highlighter.git"

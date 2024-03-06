@@ -5,8 +5,8 @@ export function tokenizer(text) {
     const types = {
         keyword: /SELECT|DISTINCT|FROM|LEFT|RIGHT|INNER|OUTER|FULL|JOIN|ON|WHERE|ORDER BY|AS|OVER|FETCH|FIRST|NEXT|ROW|ROWS|WINDOW|HAVING|LIMIT|OFFSET|INSERT INTO|VALUES|UPDATE|SET|DELETE/gy,
         number: /-?\d+(\.\d+)?/gy,
-        name: /\w+|"\w*"/gy,
-        string: /'\w*'/gy,
+        name: /\w+|"[^"]*"/gy,
+        string: /'[^']*'/gy,
         punctuation: /\*|,|\(|\)/gy,
     };
 
