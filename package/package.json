@@ -1,0 +1,22 @@
+{
+  "name": "cesh",
+  "description": "code-editor-syntax-highlighter",
+  "version": "1.0.0",
+  "type": "module",
+  "repository": {
+    "url": "https://github.com/IJMacD/code-editor-syntax-highlighter.git"
+  },
+  "module": "dist/cesh.esm.min.js",
+  "browser": "dist/cesh.umd.min.js",
+  "main": "dist/cesh.esm.min.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.12.1",
+    "rollup-plugin-scss": "^4.0.0",
+    "sass": "^1.71.1"
+  },
+  "scripts": {
+    "build": "rollup -c"
+  }
+}

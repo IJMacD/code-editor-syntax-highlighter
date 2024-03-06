@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="./node_modules/cesh/dist/cesh.min.css" />
+    <title>Cesh Example</title>
+    <style>
+        body {
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Code Editor Syntax Highlighter Example</h1>
+    <div class="container" style="display: flex;">
+        <textarea id="my-editor" style="height: 300px; flex: 1">
+SELECT
+    *,
+    123,
+    'abc'
+FROM
+    "table"</textarea>
+    </div>
+
+    <script src="./node_modules/cesh/dist/cesh.umd.min.js"></script>
+    <script>
+        cesh.editor(document.querySelector("#my-editor"), { formatter: cesh.sqlTokenizer });
+    </script>
+</body>
+
+</html>
