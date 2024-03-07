@@ -15,8 +15,9 @@
 
 <body>
     <h1>Code Editor Syntax Highlighter Example</h1>
+    <h2>SQL</h2>
     <div class="container" style="display: flex;">
-        <textarea id="my-editor" style="height: 300px; flex: 1">
+        <textarea id="sql-editor" style="height: 300px; flex: 1" spellcheck="false" placeholder="SQL">
 SELECT
     *,
     123,
@@ -25,9 +26,20 @@ FROM
     "table"</textarea>
     </div>
 
+    <h2>JS</h2>
+    <div class="container" style="display: flex;">
+        <textarea id="js-editor" style="height: 300px; flex: 1" spellcheck="false" placeholder="JS">
+const a = 123.4;
+const b = 'hello';
+if (a === b) {
+    console.log("oh no!");
+}</textarea>
+    </div>
+
     <script src="./cesh.umd.min.js"></script>
     <script>
-        cesh.editor(document.querySelector("#my-editor"), { tokenizer: cesh.sqlTokenizer });
+        cesh.editor(document.querySelector("#sql-editor"), { tokenizer: cesh.sqlTokenizer });
+        cesh.editor(document.querySelector("#js-editor"), { tokenizer: cesh.jsTokenizer });
     </script>
 </body>
 
