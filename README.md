@@ -6,7 +6,7 @@ _Code Editor Syntax Highlighter_ is an as absolutely as simple as possible decor
 ## Usage
 ```html
 <div style="display: flex;">
-<textarea id="my-editor" style="height: 300px; flex: 1;">
+    <textarea id="my-editor" style="height: 300px; flex: 1;">
 SELECT
     *,
     123,
@@ -17,7 +17,7 @@ FROM
 
 <script src="./cesh.umd.min.js"></script>
 <script>
-    cesh.editor(document.querySelector("#my-editor"), { formatter: cesh.sqlTokenizer });
+    cesh.editor(document.querySelector("#my-editor"), { tokenizer: cesh.sqlTokenizer });
 </script>
 ```
 

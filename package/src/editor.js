@@ -8,12 +8,16 @@ import "./editor.css";
  */
 
 /**
- * @param {string | Element | null} element
- * @param {{ formatter?: (text: string) => Token[] }} options
+ * @param {string | Element} element
+ * @param {{ tokenizer?: (text: string) => Token[], plugins?: ((textarea: HTMLTextAreaElement) => () => void)[] }} options
  */
-export function editor(element, { formatter } = {}) {
+export function editor(element, { tokenizer, plugins = [tabPlugin, enterPlugin, quotesPlugin] } = {}) {
     if (typeof element === "string") {
-        element = document.querySelector(element);
+        const el = document.querySelector(element);
+
+        if (el) {
+            element = el;
+        }
     }
 
     if (!element || !(element instanceof HTMLTextAreaElement)) {
@@ -40,55 +44,9 @@ export function editor(element, { formatter } = {}) {
 
     parent.insertBefore(editor, element);
 
-    const keydown = (/** @type {KeyboardEvent} */ e) => {
-        if (e.key === "Tab") {
-            e.preventDefault();
-            const i = textarea.selectionStart;
-            const { value } = textarea;
-            if (e.shiftKey) {
-                let prevNewLine = value.lastIndexOf("\n", i - 1);
-                if (prevNewLine < 0) {
-                    prevNewLine = 0;
-                } else {
-                    prevNewLine++;
-                }
-                if (value.substring(prevNewLine, prevNewLine + 4) === "    ") {
-                    textarea.value = value.substring(0, prevNewLine) + value.substring(prevNewLine + 4);
-                    textarea.selectionStart = i - 4;
-                    textarea.selectionEnd = i - 4;
-                }
-            }
-            else {
-                textarea.value = value.substring(0, i) + "    " + value.substring(i);
-                textarea.selectionStart = i + 4;
-                textarea.selectionEnd = i + 4;
-            }
-        }
-        else if (e.key === "Enter") {
-            const i = textarea.selectionStart;
-            const { value } = textarea;
-            let prevNewLine = value.lastIndexOf("\n", i - 1);
-            if (prevNewLine < 0) {
-                prevNewLine = 0;
-            } else {
-                prevNewLine++;
-            }
-            const regex = / +/gy;
-            regex.lastIndex = prevNewLine;
-            const match = regex.exec(value);
-            if (match) {
-                e.preventDefault();
-                const length = match[0].length;
-                textarea.value = value.substring(0, i) + "\n" + " ".repeat(length) + value.substring(i);
-                textarea.selectionStart = i + length + 1;
-                textarea.selectionEnd = i + length + 1;
-            }
-        }
-    };
-
     const handleChange = () => {
         let text = textarea.value;
-        const tokens = formatter ? formatter(text) : [];
+        const tokens = tokenizer ? tokenizer(text) : [];
 
         // Scroll bug if there's a spare newline at the end.
         if (text[text.length - 1] === "\n") {
@@ -104,8 +62,6 @@ export function editor(element, { formatter } = {}) {
         editor.scrollTop = textarea.scrollTop;
     };
 
-    textarea.addEventListener("keydown", keydown);
-
     textarea.addEventListener("keyup", handleChange);
 
     textarea.addEventListener("input", handleChange);
@@ -115,6 +71,9 @@ export function editor(element, { formatter } = {}) {
     const handleResize = () => {
         editor.style.width = `${textarea.offsetWidth}px`;
         editor.style.height = `${textarea.offsetHeight}px`;
+        // Just in case stylesheet hasn't loaded correctly, we'll make sure
+        // that the position is set to absolute to avoid resize glitches/jank
+        editor.style.position = "absolute";
     };
 
     const observer = new ResizeObserver(handleResize);
@@ -124,20 +83,146 @@ export function editor(element, { formatter } = {}) {
 
     handleChange();
 
+    /** @type {(() => void)[]} */
+    const unPlugin = [];
+    for (const plugin of plugins) {
+        const retVal = plugin(textarea);
+        if (retVal) {
+            unPlugin.push(retVal);
+        }
+    }
+
     return {
         destroy() {
             parent.removeChild(editor);
             textarea.classList.remove("cesh-textarea");
-            textarea.removeEventListener("keydown", keydown);
             textarea.removeEventListener("keyup", handleChange);
             textarea.removeEventListener("input", handleChange);
             textarea.removeEventListener("scroll", scroll);
             observer.disconnect();
+
+            for (const fn of unPlugin) {
+                fn();
+            }
         }
     }
+
 }
 
 /**
+ * @param {string} text
+ * @param {number} position
+ */
+function getStartOfLine(text, position) {
+    const prevNewLine = text.lastIndexOf("\n", position - 1);
+
+    if (prevNewLine < 0) {
+        return 0;
+    }
+
+    return prevNewLine + 1;
+}
+
+/**
+ * Handles inserting tabs (as four spaces) and removing leading tabs (with
+ * shift-tab).
+ * @param {HTMLTextAreaElement} textarea
+ */
+export function tabPlugin(textarea) {
+    const keydown = (/** @type {KeyboardEvent} */ e) => {
+        if (e.key === "Tab") {
+            e.preventDefault();
+            const i = textarea.selectionStart;
+            const { value } = textarea;
+            if (e.shiftKey) {
+                const lineStart = getStartOfLine(value, i);
+                if (value.substring(lineStart, lineStart + 4) === "    ") {
+                    textarea.value = value.substring(0, lineStart) + value.substring(lineStart + 4);
+                    textarea.selectionStart = i - 4;
+                    textarea.selectionEnd = i - 4;
+                }
+            }
+            else {
+                textarea.value = value.substring(0, i) + "    " + value.substring(i);
+                textarea.selectionStart = i + 4;
+                textarea.selectionEnd = i + 4;
+            }
+        }
+    };
+
+    textarea.addEventListener("keydown", keydown);
+
+    return () => textarea.removeEventListener("keydown", keydown);
+}
+
+/**
+ * Maintains indentation on enter key
+ * @param {HTMLTextAreaElement} textarea
+ */
+export function enterPlugin(textarea) {
+    const keydown = (/** @type {KeyboardEvent} */ e) => {
+        if (e.key === "Enter") {
+            const i = textarea.selectionStart;
+            const { value } = textarea;
+            const lineStart = getStartOfLine(value, i);
+            const regex = / +/gy;
+            regex.lastIndex = lineStart;
+            const match = regex.exec(value);
+            if (match) {
+                e.preventDefault();
+                const length = match[0].length;
+                textarea.value = value.substring(0, i) + "\n" + " ".repeat(length) + value.substring(i);
+                textarea.selectionStart = i + length + 1;
+                textarea.selectionEnd = i + length + 1;
+            }
+        }
+    };
+
+    textarea.addEventListener("keydown", keydown);
+
+    return () => textarea.removeEventListener("keydown", keydown);
+}
+
+/**
+ * Add single or double quotes, or parentheses or brackets around selected text.
+ * @param {HTMLTextAreaElement} textarea
+ */
+export function quotesPlugin(textarea) {
+    const keydown = (/** @type {KeyboardEvent} */ e) => {
+        const pairs = {
+            "'": "'",
+            "\"": "\"",
+            "(": ")",
+            "{": "}",
+            "[": "]",
+        };
+        if (pairs[e.key]) {
+            const i = textarea.selectionStart;
+            const j = textarea.selectionEnd;
+            if (j - i > 0) {
+                e.preventDefault();
+                const { value } = textarea;
+
+                textarea.value =
+                    value.substring(0, i)
+                    + e.key
+                    + value.substring(i, j)
+                    + pairs[e.key]
+                    + value.substring(j);
+
+                textarea.selectionStart = i + 1;
+                textarea.selectionEnd = j + 1;
+            }
+        }
+    };
+
+    textarea.addEventListener("keydown", keydown);
+
+    return () => textarea.removeEventListener("keydown", keydown);
+}
+
+/**
+ * Convert string to marked up HTML string
  * @param {string} text
  * @param {Token[]} tokens
  */
