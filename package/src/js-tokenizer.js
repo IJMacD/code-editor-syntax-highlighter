@@ -9,7 +9,7 @@ export function tokenizer(text) {
         keyword: /\b(var|let|const|return|if|for|of|in|while|yield|function|async|await|null|undefined|import|export|as|from|assert|delete|typeof|instanceof)\b/gy,
         number: /-?\d+(\.\d+)?([eE][+-]?\d+)?/gy,
         name: /\w+/gy,
-        string: /'[^']*'|"[^"]*"|`[^`]*`/gy,
+        string: /'[^'\n]*'|"[^"\n]*"|`[^`]*`/gy,
         punctuation: /:|,|\(|\)|{|}|;/gy,
         regex: /\/[^\n]*?[^\\]\//gy,
         operator: /\*=|\/=|\+=|-=|=|\+\+|--|&&|\|\|!|&|\||\*|\/|\+|-/gy,
