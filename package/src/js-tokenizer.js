@@ -11,7 +11,7 @@ export function tokenizer(text) {
         name: /\w+/gy,
         string: /'[^']*'|"[^"]*"|`[^`]*`/gy,
         punctuation: /:|,|\(|\)|{|}|;/gy,
-        regex: /\/[^\n]*[^\\]\//gy,
+        regex: /\/[^\n]*?[^\\]\//gy,
         operator: /\*=|\/=|\+=|-=|=|\+\+|--|&&|\|\|!|&|\||\*|\/|\+|-/gy,
     };
 
