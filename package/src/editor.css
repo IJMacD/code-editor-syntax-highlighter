@@ -8,7 +8,8 @@
     border: 0;
     box-sizing: border-box;
     padding: 4px;
-    overflow-y: auto;
+    overflow: auto;
+    white-space: pre;
 }
 
 .cesh-textarea {

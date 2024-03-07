@@ -13,3 +13,11 @@
 .number {
     color: #0d6bb8;
 }
+
+.comment {
+    color: #656565;
+}
+
+.regex {
+    color: #e82323;
+}
