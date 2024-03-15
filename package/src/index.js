@@ -1,4 +1,5 @@
-import { editor, markup, tabPlugin, enterPlugin, quotesPlugin } from "./editor";
+import { editor, tabPlugin, enterPlugin, quotesPlugin } from "./editor";
+import { markup } from "./markup";
 import { tokenizer as sqlTokenizer } from "./sql-tokenizer";
 import { tokenizer as jsTokenizer } from "./js-tokenizer";
 import "./highlight.css";

@@ -1,4 +1,5 @@
 import "./editor.css";
+import { markup } from "./markup";
 
 /**
  * @typedef Token
@@ -9,9 +10,23 @@ import "./editor.css";
 
 /**
  * @param {string | Element} element
- * @param {{ tokenizer?: (text: string) => Token[], plugins?: ((textarea: HTMLTextAreaElement) => () => void)[] }} options
+ * @param {{ tokenizer: (text: string) => Token[], plugins?: ((textarea: HTMLTextAreaElement, editor: HTMLDivElement) => () => void)[] }} options
  */
-export function editor(element, { tokenizer, plugins = [tabPlugin, enterPlugin, quotesPlugin] } = {}) {
+export function editor(element, { tokenizer, plugins = [tabPlugin, enterPlugin, quotesPlugin] }) {
+    return baseEditor(element, [
+        tokenizerPlugin(tokenizer),
+        scrollPlugin,
+        resizePlugin,
+        positionPlugin,
+        ...plugins,
+    ]);
+}
+
+/**
+ * @param {string | Element} element
+ * @param {((textarea: HTMLTextAreaElement, editor: HTMLDivElement) => () => void)[] } features
+ */
+export function baseEditor(element, features) {
     if (typeof element === "string") {
         const el = document.querySelector(element);
 
@@ -20,76 +35,43 @@ export function editor(element, { tokenizer, plugins = [tabPlugin, enterPlugin, 
         }
     }
 
-    if (!element || !(element instanceof HTMLTextAreaElement)) {
-        console.warn("[Editor] Couldn't find element or element wasn't a textarea");
+    if (!(element instanceof HTMLTextAreaElement)) {
+        console.warn("[Cesh] Not a textarea");
         return;
     }
 
     const parent = element.parentElement;
 
     if (!parent) {
-        console.warn("[Editor] Element didn't have a parent");
+        // Textarea not in DOM tree. Just return
         return;
     }
 
+    // Elements
     const textarea = element;
-
     const editor = document.createElement("div");
-
-    editor.classList.add("cesh-editor");
-
-    textarea.classList.add("cesh-textarea");
-
-    parent.style.position = "relative";
-
     parent.insertBefore(editor, element);
 
-    const handleChange = () => {
-        let text = textarea.value;
-        const tokens = tokenizer ? tokenizer(text) : [];
+    // Styles
+    textarea.classList.add("cesh-textarea");
+    editor.classList.add("cesh-editor");
+    parent.style.position = "relative";
+    // Just in case stylesheet hasn't loaded correctly, we'll make sure
+    // that the position is set to absolute to avoid resize glitches/jank
+    editor.style.position = "absolute";
 
-        // Scroll bug if there's a spare newline at the end.
-        if (text[text.length - 1] === "\n") {
-            text += " ";
-        }
+    // const styles = textarea.computedStyleMap();
+    // editor.style.fontSize = styles.get("font-size");
+    // editor.style.fontWeight = styles.get("font-weight");
+    // editor.style.border = styles.get("font-weight");
 
-        editor.innerHTML = markup(text, tokens);
-
-        editor.scrollTop = textarea.scrollTop;
-    };
-
-    const scroll = () => {
-        editor.scrollLeft = textarea.scrollLeft;
-        editor.scrollTop = textarea.scrollTop;
-    };
-
-    textarea.addEventListener("keyup", handleChange);
-
-    textarea.addEventListener("input", handleChange);
-
-    textarea.addEventListener("scroll", scroll);
-
-    const handleResize = () => {
-        editor.style.width = `${textarea.offsetWidth}px`;
-        editor.style.height = `${textarea.offsetHeight}px`;
-        // Just in case stylesheet hasn't loaded correctly, we'll make sure
-        // that the position is set to absolute to avoid resize glitches/jank
-        editor.style.position = "absolute";
-    };
-
-    const observer = new ResizeObserver(handleResize);
-    observer.observe(textarea);
-
-    handleResize();
-
-    handleChange();
 
     /** @type {(() => void)[]} */
-    const unPlugin = [];
-    for (const plugin of plugins) {
-        const retVal = plugin(textarea);
+    const unFeature = [];
+    for (const plugin of features) {
+        const retVal = plugin(textarea, editor);
         if (retVal) {
-            unPlugin.push(retVal);
+            unFeature.push(retVal);
         }
     }
 
@@ -97,18 +79,101 @@ export function editor(element, { tokenizer, plugins = [tabPlugin, enterPlugin, 
         destroy() {
             parent.removeChild(editor);
             textarea.classList.remove("cesh-textarea");
-            textarea.removeEventListener("keyup", handleChange);
-            textarea.removeEventListener("input", handleChange);
-            textarea.removeEventListener("scroll", scroll);
-            observer.disconnect();
 
-            for (const fn of unPlugin) {
+            for (const fn of unFeature) {
                 fn();
             }
         }
     }
 
 }
+
+/**
+ * @param {HTMLTextAreaElement} textarea
+ * @param {HTMLDivElement} editor
+ */
+function resizePlugin(textarea, editor) {
+    const handleResize = () => {
+        editor.style.width = `${textarea.offsetWidth}px`;
+        editor.style.height = `${textarea.offsetHeight}px`;
+    };
+
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(textarea);
+
+    handleResize();
+
+    return () => observer.disconnect();
+}
+
+/**
+ * Uses a polling implementation
+ * @param {HTMLTextAreaElement} textarea
+ * @param {HTMLDivElement} editor
+ */
+function positionPlugin(textarea, editor) {
+    const handlePosition = () => {
+        editor.style.top = `${textarea.offsetTop}px`;
+        editor.style.left = `${textarea.offsetLeft}px`;
+    };
+
+    handlePosition();
+
+    const positionInterval = setInterval(handlePosition, 100);
+
+    return () => clearInterval(positionInterval);
+}
+
+/**
+ * @param {HTMLTextAreaElement} textarea
+ * @param {HTMLDivElement} editor
+ */
+function scrollPlugin(textarea, editor) {
+    const scroll = () => {
+        editor.scrollLeft = textarea.scrollLeft;
+        editor.scrollTop = textarea.scrollTop;
+    };
+
+    textarea.addEventListener("scroll", scroll);
+
+    return () => textarea.removeEventListener("scroll", scroll);
+}
+
+const tokenizerPlugin = (/** @type {(text: string) => Token[]} */ tokenizer) =>
+    /**
+     * @param {HTMLTextAreaElement} textarea
+     * @param {HTMLDivElement} editor
+     */
+    (textarea, editor) => {
+        const handleChange = () => {
+            let text = textarea.value;
+            const tokens = tokenizer(text);
+
+            // Scroll bug if there's a spare newline at the end.
+            if (text[text.length - 1] === "\n") {
+                text += " ";
+            }
+
+            editor.innerHTML = markup(text, tokens);
+        };
+
+        textarea.addEventListener("keyup", handleChange);
+
+        textarea.addEventListener("input", handleChange);
+
+        const vChange = () => {
+            document.visibilityState === "visible" && handleChange();
+        };
+        document.addEventListener("visibilitychange", vChange);
+
+        handleChange();
+
+        return () => {
+            textarea.removeEventListener("keyup", handleChange);
+            textarea.removeEventListener("input", handleChange);
+            document.removeEventListener("visibilitychange", vChange);
+        };
+    };
 
 /**
  * @param {string} text
@@ -134,19 +199,46 @@ export function tabPlugin(textarea) {
         if (e.key === "Tab") {
             e.preventDefault();
             const i = textarea.selectionStart;
+            const j = textarea.selectionEnd;
             const { value } = textarea;
-            if (e.shiftKey) {
-                const lineStart = getStartOfLine(value, i);
-                if (value.substring(lineStart, lineStart + 4) === "    ") {
-                    textarea.value = value.substring(0, lineStart) + value.substring(lineStart + 4);
-                    textarea.selectionStart = i - 4;
-                    textarea.selectionEnd = i - 4;
+            const lineStart = getStartOfLine(value, i);
+            if (i === j) {
+                if (e.shiftKey) {
+                    const re = / {1,4}/y;
+                    re.lastIndex = lineStart;
+                    const match = re.exec(value);
+                    if (match) {
+                        const l = match[0].length;
+                        textarea.value = value.substring(0, lineStart) + value.substring(lineStart + l);
+                        textarea.selectionStart = i - l;
+                        textarea.selectionEnd = i - l;
+                    }
+                }
+                else {
+                    const index = (i - lineStart) % 4;
+                    const d = index === 0 ? 4 : 4 - index;
+                    textarea.value = value.substring(0, i) + " ".repeat(d) + value.substring(i);
+                    textarea.selectionStart = i + d;
+                    textarea.selectionEnd = i + d;
                 }
             }
             else {
-                textarea.value = value.substring(0, i) + "    " + value.substring(i);
-                textarea.selectionStart = i + 4;
-                textarea.selectionEnd = i + 4;
+                const mid = value.substring(lineStart, j);
+                if (e.shiftKey) {
+                    const re = /(^|\n)    /g;
+                    const mod = mid.replace(re, (n) => n[0] === "\n" ? "\n" : "");
+                    const mud = [...mid.matchAll(re)].length;
+                    textarea.value = value.substring(0, lineStart) + mod + value.substring(j);
+                    textarea.selectionStart = i - 4;
+                    textarea.selectionEnd = j - mud * 4;
+                }
+                else {
+                    const mod = mid.replace(/\n/g, "\n    ");
+                    const mud = mid.replace(/[^\n]/g, "").length + 1;
+                    textarea.value = value.substring(0, lineStart) + "    " + mod + value.substring(j);
+                    textarea.selectionStart = i + 4;
+                    textarea.selectionEnd = j + mud * 4;
+                }
             }
         }
     };
@@ -220,42 +312,4 @@ export function quotesPlugin(textarea) {
     textarea.addEventListener("keydown", keydown);
 
     return () => textarea.removeEventListener("keydown", keydown);
-}
-
-/**
- * Convert string to marked up HTML string
- * @param {string} text
- * @param {Token[]} tokens
- */
-export function markup(text, tokens) {
-    const markup = [];
-
-    let lastIndex = 0;
-    for (const token of tokens) {
-        if (token.start > lastIndex) {
-            markup.push(escapeHtml(text.substring(lastIndex, token.start)));
-        }
-
-        lastIndex = token.start + token.length;
-
-        markup.push(`<span class="${token.type}">${escapeHtml(text.substring(token.start, lastIndex))}</span>`);
-    }
-
-    if (lastIndex < text.length) {
-        markup.push(escapeHtml(text.substring(lastIndex)));
-    }
-
-    return markup.join("");
-}
-
-function escapeHtml(text) {
-    var map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-
-    return text.replace(/[&<>"']/g, function (m) { return map[m]; });
 }

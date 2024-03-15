@@ -5,7 +5,6 @@
     font-family: 'Courier New', Courier, monospace;
     font-size: 1rem;
     font-weight: bold;
-    border: 0;
     box-sizing: border-box;
     padding: 4px;
     overflow: auto;
@@ -25,9 +24,9 @@
 }
 
 .cesh-editor {
-    white-space: pre;
     pointer-events: none;
     position: absolute;
     top: 0;
     z-index: -1;
+    border: 1px solid transparent;
 }

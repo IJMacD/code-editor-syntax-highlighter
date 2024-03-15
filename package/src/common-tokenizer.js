@@ -13,6 +13,10 @@ export function tokenizer(text, types) {
             if (match = regex.exec(text)) {
                 const length = match[0].length;
 
+                if (length === 0) {
+                    throw Error(type);
+                }
+
                 out.push({
                     type,
                     start,
