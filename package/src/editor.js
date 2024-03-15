@@ -147,7 +147,10 @@ const tokenizerPlugin = (/** @type {(text: string) => Token[]} */ tokenizer) =>
     (textarea, editor) => {
         const handleChange = () => {
             let text = textarea.value;
-            const tokens = tokenizer(text);
+            let tokens = [];
+            try {
+                tokens = tokenizer(text);
+            } catch (e) { }
 
             // Scroll bug if there's a spare newline at the end.
             if (text[text.length - 1] === "\n") {
