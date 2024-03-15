@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="./cesh.min.css" />
+    <meta name="description" content="Cesh: Code Editor Syntax Highlighter Example">
     <title>Cesh Example</title>
     <style>
         body {
@@ -36,10 +37,24 @@ if (a === b) {
 }</textarea>
     </div>
 
+
+    <h2>Twig</h2>
+    <div class="container" style="display: flex;">
+        <textarea id="twig-editor" style="height: 300px; flex: 1" spellcheck="false" placeholder="Twig">
+{% if users|length > 0 %}
+    <ul>
+        {% for user in users %}
+            <li>{{ user.username|e }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}</textarea>
+    </div>
+
     <script src="./cesh.umd.min.js"></script>
     <script>
         cesh.editor(document.querySelector("#sql-editor"), { tokenizer: cesh.sqlTokenizer });
         cesh.editor(document.querySelector("#js-editor"), { tokenizer: cesh.jsTokenizer });
+        cesh.editor(document.querySelector("#twig-editor"), { tokenizer: cesh.twigTokenizer });
     </script>
 </body>
 
