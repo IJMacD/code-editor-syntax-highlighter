@@ -316,3 +316,17 @@ export function quotesPlugin(textarea) {
 
     return () => textarea.removeEventListener("keydown", keydown);
 }
+
+/**
+ * Editor inherits font properties from the textarea.
+ * @param {HTMLTextAreaElement} textarea
+ * @param {HTMLDivElement} editor
+ */
+export function fontPlugin(textarea, editor) {
+    const styles = getComputedStyle(textarea);
+    for (const [name, value] of Object.entries(styles)) {
+        if (name.startsWith("font")) {
+            editor.style[name] = value;
+        }
+    }
+}
