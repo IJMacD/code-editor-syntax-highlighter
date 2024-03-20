@@ -40,7 +40,8 @@ if (a === b) {
 
     <h2>Twig</h2>
     <div class="container" style="display: flex;">
-        <textarea id="twig-editor" style="height: 300px; flex: 1" spellcheck="false" placeholder="Twig">
+        <textarea id="twig-editor" style="height: 300px; flex: 1; font-weight: bold; font-size: 1.2em"
+            spellcheck="false" placeholder="Twig">
 {% if users|length > 0 %}
     <ul>
         {% for user in users %}
@@ -54,7 +55,7 @@ if (a === b) {
     <script>
         cesh.editor(document.querySelector("#sql-editor"), { tokenizer: cesh.sqlTokenizer });
         cesh.editor(document.querySelector("#js-editor"), { tokenizer: cesh.jsTokenizer });
-        cesh.editor(document.querySelector("#twig-editor"), { tokenizer: cesh.twigTokenizer });
+        cesh.editor(document.querySelector("#twig-editor"), { tokenizer: cesh.twigTokenizer, plugins: [cesh.tabPlugin, cesh.fontPlugin] });
     </script>
 </body>
 
