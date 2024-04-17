@@ -3,6 +3,7 @@
   "description": "code-editor-syntax-highlighter",
   "version": "1.4.0",
   "type": "module",
+  "types": "dist/index.d.ts",
   "repository": {
     "url": "https://github.com/IJMacD/code-editor-syntax-highlighter.git"
   },
@@ -13,11 +14,16 @@
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
     "rollup": "^4.12.1",
+    "rollup-plugin-jsx": "^1.0.3",
     "rollup-plugin-scss": "^4.0.0",
-    "sass": "^1.71.1"
+    "sass": "^1.71.1",
+    "typescript": "^5.4.5"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "tsc && rollup -c",
     "watch": "rollup -c -w"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
   }
 }

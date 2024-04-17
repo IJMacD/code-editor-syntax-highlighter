@@ -92,7 +92,7 @@ export function baseEditor(element, features) {
  * @param {HTMLTextAreaElement} textarea
  * @param {HTMLDivElement} editor
  */
-function resizePlugin(textarea, editor) {
+export function resizePlugin(textarea, editor) {
     const handleResize = () => {
         editor.style.width = `${textarea.offsetWidth}px`;
         editor.style.height = `${textarea.offsetHeight}px`;
@@ -111,7 +111,7 @@ function resizePlugin(textarea, editor) {
  * @param {HTMLTextAreaElement} textarea
  * @param {HTMLDivElement} editor
  */
-function positionPlugin(textarea, editor) {
+export function positionPlugin(textarea, editor) {
     const handlePosition = () => {
         editor.style.top = `${textarea.offsetTop}px`;
         editor.style.left = `${textarea.offsetLeft}px`;
@@ -128,7 +128,7 @@ function positionPlugin(textarea, editor) {
  * @param {HTMLTextAreaElement} textarea
  * @param {HTMLDivElement} editor
  */
-function scrollPlugin(textarea, editor) {
+export function scrollPlugin(textarea, editor) {
     const scroll = () => {
         editor.scrollLeft = textarea.scrollLeft;
         editor.scrollTop = textarea.scrollTop;
@@ -139,7 +139,7 @@ function scrollPlugin(textarea, editor) {
     return () => textarea.removeEventListener("scroll", scroll);
 }
 
-const tokenizerPlugin = (/** @type {(text: string) => Token[]} */ tokenizer) =>
+export const tokenizerPlugin = (/** @type {(text: string) => Token[]} */ tokenizer) =>
     /**
      * @param {HTMLTextAreaElement} textarea
      * @param {HTMLDivElement} editor
